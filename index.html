@@ -424,7 +424,7 @@
         function saveToLocalStorage() {
             const players = [];
             document.querySelectorAll('.player-input').forEach(input => {
-                if (input.value.trim()) {
+                if (input.value?.trim()) {
                     players.push(input.value.trim());
                 }
             });
