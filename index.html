@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imposter Renewed</title>
+    <link rel="icon" href="https://i.ibb.co/whh0xFQ2/imposter-logo.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'imposter-orange': '#FF7B25',
+                        'imposter-turquoise': '#25D9D9',
+                        'imposter-lightblue': '#25A0FF',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'card-flip': 'cardFlip 0.6s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        cardFlip: {
+                            '0%': { transform: 'rotateY(0deg)' },
+                            '50%': { transform: 'rotateY(90deg)' },
+                            '100%': { transform: 'rotateY(0deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .card {
+            perspective: 1000px;
+        }
+        
+        .card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            backface-visibility: hidden;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        .player-input:focus-within {
+            box-shadow: 0 0 0 2px #25A0FF;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen pb-20">
+    <!-- Main App Container -->
+    <div id="app" class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-imposter-orange mb-2">Imposter Renewed</h1>
+            <p class="text-gray-600">Pass-and-play Partyspiel</p>
+        </header>
+        
+        <!-- Main Screen -->
+        <div id="main-screen" class="animate-fade-in">
+            <!-- Players Section -->
+            <section class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Spieler</h2>
+                    <button id="add-player" class="bg-imposter-lightblue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Spieler hinzufügen
+                    </button>
+                </div>
+                
+                <div id="players-container" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                    <!-- Player inputs will be added here -->
+                </div>
+            </section>
+            
+            <!-- Impostor Settings -->
+            <section class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Impostor</h2>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-medium">Anzahl der Impostors:</span>
+                        <div class="flex items-center space-x-4">
+                            <button id="decrease-impostors" class="bg-gray-200 text-gray-800 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-300 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <span id="impostor-count" class="text-xl font-bold text-imposter-orange">1</span>
+                            <button id="increase-impostors" class="bg-gray-200 text-gray-800 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-300 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p id="impostor-recommendation" class="text-sm text-gray-600 italic">Empfohlen: 1 Impostor für 4-6 Spieler</p>
+                </div>
+            </section>
+            
+            <!-- Game Options -->
+            <section class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Spieloptionen</h2>
+                <div class="bg-white p-4 rounded-xl shadow-md space-y-4">
+                    <!-- Impostor Hints Toggle -->
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium">Hinweise für Impostor</h3>
+                            <p class="text-sm text-gray-600">Impostors erhalten ein Tippwort zum Hauptwort</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="hints-toggle" type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-imposter-turquoise"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Family Mode Toggle -->
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium">Family Mode</h3>
+                            <p class="text-sm text-gray-600">Filtert schwierige oder anstößige Wörter</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="family-mode-toggle" type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-imposter-turquoise"></div>
+                        </label>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Categories -->
+            <section class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Kategorien</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <button data-category="world" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🌍 Rund um die Welt
+                    </button>
+                    <button data-category="entertainment" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🎬 Unterhaltung
+                    </button>
+                    <button data-category="everyday" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🏠 Alltag
+                    </button>
+                    <button data-category="animals" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🐾 Tiere & Natur
+                    </button>
+                    <button data-category="sports" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        ⚽ Sport & Freizeit
+                    </button>
+                    <button data-category="knowledge" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        📚 Wissen & Schule
+                    </button>
+                    <button data-category="celebrations" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🎉 Feste & Feiern
+                    </button>
+                    <button data-category="german" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🇩🇪 Deutsches Kulturgut
+                    </button>
+                    <button data-category="celebrities" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        🌟 Stars & Promis
+                    </button>
+                    <button data-category="custom" class="category-btn bg-white p-3 rounded-lg shadow-md hover:bg-gray-50 transition text-center">
+                        ✏️ Eigene Begriffe
+                    </button>
+                </div>
+                
+                <!-- Custom Words Input -->
+                <div id="custom-words-container" class="mt-4 hidden">
+                    <label for="custom-words" class="block text-sm font-medium text-gray-700 mb-1">Eigene Begriffe (mit Komma trennen)</label>
+                    <textarea id="custom-words" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-imposter-lightblue focus:border-transparent" placeholder="z.B. Apfel, Banane, Orange"></textarea>
+                </div>
+            </section>
+            
+            <!-- Start Game Button -->
+            <div class="text-center">
+                <button id="start-game" class="bg-imposter-orange text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition shadow-md">
+                    Spiel starten
+                </button>
+            </div>
+        </div>
+        
+        <!-- Role Distribution Screen -->
+        <div id="role-screen" class="hidden animate-fade-in">
+            <div class="card w-full max-w-md mx-auto h-64">
+                <div class="card-inner relative w-full h-full">
+                    <!-- Front of card (hidden when flipped) -->
+                    <div class="card-front absolute w-full h-full bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center">
+                        <p class="text-gray-500 mb-4">Karte wird an Spieler weitergegeben...</p>
+                        <button id="show-role" class="bg-imposter-lightblue text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
+                            Rolle anzeigen
+                        </button>
+                    </div>
+                    
+                    <!-- Back of card (shown when flipped) -->
+                    <div class="card-back absolute w-full h-full bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center">
+                        <div id="impostor-role" class="hidden text-center">
+                            <h2 class="text-2xl font-bold text-imposter-orange mb-2">Du bist der Impostor!</h2>
+                            <p id="hint-word" class="text-gray-700 mt-2 hidden">Tippwort: <span class="font-semibold text-imposter-turquoise" id="hint-word-value"></span></p>
+                        </div>
+                        <div id="normal-role" class="hidden text-center">
+                            <h2 class="text-xl text-gray-600 mb-2">Dein Wort ist:</h2>
+                            <p class="text-3xl font-bold text-imposter-lightblue" id="main-word"></p>
+                        </div>
+                        
+                        <button id="next-player" class="mt-6 bg-imposter-orange text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition hidden">
+                            Nächster Spieler
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="first-player" class="mt-8 text-center hidden">
+                <p class="text-lg"><span class="font-semibold text-imposter-orange" id="first-player-name"></span> fängt an!</p>
+                <button id="reveal-impostors" class="mt-4 bg-imposter-turquoise text-white px-6 py-2 rounded-lg hover:bg-teal-500 transition">
+                    Impostor aufdecken
+                </button>
+            </div>
+        </div>
+        
+        <!-- Resolution Screen -->
+        <div id="resolution-screen" class="hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto">
+                <h2 class="text-2xl font-bold text-imposter-orange mb-6 text-center">Auflösung</h2>
+                <div class="text-center">
+                    <p class="text-lg mb-4"><span id="impostor-names" class="font-semibold text-imposter-orange"></span> war/en der/die Impostor!</p>
+                    <button id="new-round" class="bg-imposter-lightblue text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
+                        Neue Runde starten
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Service Worker Registration for PWA -->
+    <script>
+        // Word database
+        const wordDatabase = {
+            world: {
+                normal: ["Paris", "Berlin", "Tokio", "London", "Rom", "New York", "Sydney", "Kapstadt", "Rio de Janeiro", "Moskau"],
+                hints: ["Frankreich", "Deutschland", "Japan", "England", "Italien", "USA", "Australien", "Südafrika", "Brasilien", "Russland"],
+                family: ["Paris", "Berlin", "Tokio", "London", "Rom", "New York", "Sydney"]
+            },
+            entertainment: {
+                normal: ["Film", "Musik", "Theater", "Konzert", "Festival", "Serie", "Buch", "Kunst", "Tanz", "Foto"],
+                hints: ["Kino", "Song", "Bühne", "Live", "Event", "Episode", "Roman", "Gemälde", "Ballett", "Kamera"],
+                family: ["Film", "Musik", "Theater", "Konzert", "Serie", "Buch", "Tanz"]
+            },
+            everyday: {
+                normal: ["Stuhl", "Tisch", "Lampe", "Bett", "Schrank", "Spiegel", "Teppich", "Kissen", "Vorhang", "Regal"],
+                hints: ["Sitz", "Platte", "Licht", "Schlaf", "Aufbewahrung", "Reflexion", "Boden", "Kopf", "Fenster", "Bücher"],
+                family: ["Stuhl", "Tisch", "Lampe", "Bett", "Schrank", "Spiegel", "Kissen"]
+            },
+            animals: {
+                normal: ["Hund", "Katze", "Vogel", "Fisch", "Pferd", "Schlange", "Maus", "Kaninchen", "Schildkröte", "Hamster"],
+                hints: ["Wau", "Miau", "Flügel", "Aquarium", "Galopp", "Gift", "Käse", "Möhre", "Panzer", "Rad"],
+                family: ["Hund", "Katze", "Vogel", "Fisch", "Pferd", "Kaninchen", "Hamster"]
+            },
+            sports: {
+                normal: ["Fußball", "Basketball", "Tennis", "Schwimmen", "Laufen", "Radfahren", "Golf", "Skifahren", "Boxen", "Yoga"],
+                hints: ["Tor", "Korb", "Schläger", "Pool", "Sprint", "Pedale", "Loch", "Schnee", "Ring", "Dehnung"],
+                family: ["Fußball", "Basketball", "Tennis", "Schwimmen", "Laufen", "Radfahren", "Yoga"]
+            },
+            knowledge: {
+                normal: ["Mathe", "Physik", "Chemie", "Biologie", "Geschichte", "Geografie", "Literatur", "Kunst", "Musik", "Philosophie"],
+                hints: ["Zahlen", "Atome", "Reaktion", "Leben", "Vergangenheit", "Karten", "Bücher", "Farben", "Noten", "Denken"],
+                family: ["Mathe", "Biologie", "Geschichte", "Geografie", "Literatur", "Kunst", "Musik"]
+            },
+            celebrations: {
+                normal: ["Geburtstag", "Hochzeit", "Weihnachten", "Ostern", "Silvester", "Halloween", "Karneval", "Taufe", "Jubiläum", "Party"],
+                hints: ["Kuchen", "Ring", "Geschenke", "Eier", "Feuerwerk", "Kostüm", "Maske", "Wasser", "Jahre", "Tanz"],
+                family: ["Geburtstag", "Hochzeit", "Weihnachten", "Ostern", "Silvester", "Taufe", "Party"]
+            },
+            german: {
+                normal: ["Oktoberfest", "Brezel", "Lederhose", "Sauerkraut", "Bratwurst", "Schwarzwald", "Neuschwanstein", "Brandenburger Tor", "Bier", "Volkswagen"],
+                hints: ["München", "Salz", "Tracht", "Kohl", "Grill", "Kuchen", "Schloss", "Berlin", "Hopfen", "Auto"],
+                family: ["Oktoberfest", "Brezel", "Schwarzwald", "Neuschwanstein", "Brandenburger Tor"]
+            },
+            celebrities: {
+                normal: ["Merkel", "Beckenbauer", "Schweinsteiger", "Klum", "Lagerfeld", "Grönemeyer", "Riefenstahl", "Ernst", "Böhmi", "Fleischmann"],
+                hints: ["Kanzlerin", "Fußball", "Bayern", "Model", "Mode", "Musik", "Regisseurin", "Komiker", "TV", "Schauspieler"],
+                family: ["Merkel", "Beckenbauer", "Schweinsteiger", "Klum", "Grönemeyer"]
+            },
+            custom: {
+                normal: [],
+                hints: [],
+                family: []
+            }
+        };
+
+        // Game state
+        const gameState = {
+            players: [],
+            impostors: [],
+            currentPlayerIndex: 0,
+            mainWord: "",
+            hintWord: "",
+            selectedCategory: "",
+            useHints: true,
+            familyMode: false
+        };
+
+        // DOM elements
+        const elements = {
+            mainScreen: document.getElementById('main-screen'),
+            roleScreen: document.getElementById('role-screen'),
+            resolutionScreen: document.getElementById('resolution-screen'),
+            playersContainer: document.getElementById('players-container'),
+            impostorCount: document.getElementById('impostor-count'),
+            impostorRecommendation: document.getElementById('impostor-recommendation'),
+            hintsToggle: document.getElementById('hints-toggle'),
+            familyModeToggle: document.getElementById('family-mode-toggle'),
+            customWordsContainer: document.getElementById('custom-words-container'),
+            customWords: document.getElementById('custom-words'),
+            startGame: document.getElementById('start-game'),
+            showRole: document.getElementById('show-role'),
+            nextPlayer: document.getElementById('next-player'),
+            revealImpostors: document.getElementById('reveal-impostors'),
+            newRound: document.getElementById('new-round'),
+            impostorRole: document.getElementById('impostor-role'),
+            normalRole: document.getElementById('normal-role'),
+            hintWordValue: document.getElementById('hint-word-value'),
+            mainWord: document.getElementById('main-word'),
+            firstPlayer: document.getElementById('first-player'),
+            firstPlayerName: document.getElementById('first-player-name'),
+            impostorNames: document.getElementById('impostor-names'),
+            card: document.querySelector('.card'),
+            decreaseImpostors: document.getElementById('decrease-impostors'),
+            increaseImpostors: document.getElementById('increase-impostors'),
+            addPlayer: document.getElementById('add-player')
+        };
+
+        // Initialize the app
+        function init() {
+            loadFromLocalStorage();
+            setupEventListeners();
+            updateImpostorRecommendation();
+            addPlayerInput();
+        }
+
+        // Load data from localStorage
+        function loadFromLocalStorage() {
+            const savedPlayers = localStorage.getItem('imposterPlayers');
+            if (savedPlayers) {
+                const players = JSON.parse(savedPlayers);
+                players.forEach(player => {
+                    addPlayerInput(player);
+                });
+            }
+            
+            const savedImpostorCount = localStorage.getItem('impostorCount');
+            if (savedImpostorCount) {
+                elements.impostorCount.textContent = savedImpostorCount;
+            }
+            
+            const savedHints = localStorage.getItem('useHints');
+            if (savedHints) {
+                elements.hintsToggle.checked = savedHints === 'true';
+            }
+            
+            const savedFamilyMode = localStorage.getItem('familyMode');
+            if (savedFamilyMode) {
+                elements.familyModeToggle.checked = savedFamilyMode === 'true';
+            }
+            
+            const savedCategory = localStorage.getItem('selectedCategory');
+            if (savedCategory) {
+                document.querySelector(`.category-btn[data-category="${savedCategory}"]`).classList.add('bg-imposter-lightblue', 'text-white');
+                if (savedCategory === 'custom') {
+                    elements.customWordsContainer.classList.remove('hidden');
+                }
+            }
+            
+            const savedCustomWords = localStorage.getItem('customWords');
+            if (savedCustomWords) {
+                elements.customWords.value = savedCustomWords;
+                wordDatabase.custom.normal = savedCustomWords.split(',').map(word => word.trim()).filter(word => word);
+            }
+        }
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            const players = [];
+            document.querySelectorAll('.player-input').forEach(input => {
+                if (input.value.trim()) {
+                    players.push(input.value.trim());
+                }
+            });
+            
+            localStorage.setItem('imposterPlayers', JSON.stringify(players));
+            localStorage.setItem('impostorCount', elements.impostorCount.textContent);
+            localStorage.setItem('useHints', elements.hintsToggle.checked);
+            localStorage.setItem('familyMode', elements.familyModeToggle.checked);
+            localStorage.setItem('selectedCategory', gameState.selectedCategory);
+            
+            if (gameState.selectedCategory === 'custom') {
+                localStorage.setItem('customWords', elements.customWords.value);
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Player management
+            elements.addPlayer.addEventListener('click', addPlayerInput);
+            
+            // Impostor count
+            elements.decreaseImpostors.addEventListener('click', () => {
+                const count = parseInt(elements.impostorCount.textContent);
+                if (count > 1) {
+                    elements.impostorCount.textContent = count - 1;
+                    updateImpostorRecommendation();
+                }
+            });
+            
+            elements.increaseImpostors.addEventListener('click', () => {
+                const count = parseInt(elements.impostorCount.textContent);
+                const playerCount = document.querySelectorAll('.player-input').length;
+                if (count < Math.min(10, playerCount - 1)) {
+                    elements.impostorCount.textContent = count + 1;
+                    updateImpostorRecommendation();
+                }
+            });
+            
+            // Category selection
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(b => {
+                        b.classList.remove('bg-imposter-lightblue', 'text-white');
+                    });
+                    this.classList.add('bg-imposter-lightblue', 'text-white');
+                    
+                    const category = this.dataset.category;
+                    gameState.selectedCategory = category;
+                    
+                    if (category === 'custom') {
+                        elements.customWordsContainer.classList.remove('hidden');
+                    } else {
+                        elements.customWordsContainer.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Custom words input
+            elements.customWords.addEventListener('input', function() {
+                const words = this.value.split(',').map(word => word.trim()).filter(word => word);
+                wordDatabase.custom.normal = words;
+                wordDatabase.custom.hints = words.map(word => "Tipp zu " + word);
+            });
+            
+            // Start game
+            elements.startGame.addEventListener('click', startGame);
+            
+            // Role distribution
+            elements.showRole.addEventListener('click', showRole);
+            elements.nextPlayer.addEventListener('click', nextPlayer);
+            elements.revealImpostors.addEventListener('click', revealImpostors);
+            elements.newRound.addEventListener('click', newRound);
+        }
+
+        // Add player input field
+        function addPlayerInput(value = '') {
+            if (document.querySelectorAll('.player-input').length >= 50) return;
+            
+            const div = document.createElement('div');
+            div.className = 'player-input flex items-center';
+            div.innerHTML = `
+                <input type="text" value="${value}" placeholder="Spielername" class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-imposter-lightblue focus:border-transparent">
+                <button class="remove-player bg-gray-200 text-gray-700 px-3 py-2 rounded-r-lg hover:bg-gray-300 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+            
+            const removeBtn = div.querySelector('.remove-player');
+            removeBtn.addEventListener('click', () => {
+                div.remove();
+                updateImpostorRecommendation();
+            });
+            
+            elements.playersContainer.appendChild(div);
+            updateImpostorRecommendation();
+        }
+
+        // Update impostor recommendation based on player count
+        function updateImpostorRecommendation() {
+            const playerCount = document.querySelectorAll('.player-input').length;
+            const impostorCount = parseInt(elements.impostorCount.textContent);
+            
+            let recommendation = "";
+            if (playerCount <= 3) {
+                recommendation = "Empfohlen: 1 Impostor für 2-3 Spieler";
+            } else if (playerCount <= 6) {
+                recommendation = "Empfohlen: 1 Impostor für 4-6 Spieler";
+            } else if (playerCount <= 9) {
+                recommendation = "Empfohlen: 2 Impostors für 7-9 Spieler";
+            } else {
+                recommendation = "Empfohlen: 3 Impostors für 10+ Spieler";
+            }
+            
+            elements.impostorRecommendation.textContent = recommendation;
+            
+            // Adjust impostor count if it's too high for current player count
+            if (impostorCount >= playerCount) {
+                elements.impostorCount.textContent = Math.max(1, playerCount - 1);
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            // Validate inputs
+            const playerInputs = document.querySelectorAll('.player-input input');
+            const players = [];
+            
+            playerInputs.forEach(input => {
+                const name = input.value.trim();
+                if (name) {
+                    players.push(name);
+                }
+            });
+            
+            if (players.length < 2) {
+                alert("Mindestens 2 Spieler benötigt!");
+                return;
+            }
+            
+            if (!gameState.selectedCategory) {
+                alert("Bitte eine Kategorie auswählen!");
+                return;
+            }
+            
+            if (gameState.selectedCategory === 'custom' && wordDatabase.custom.normal.length < 2) {
+                alert("Bitte mindestens 2 eigene Begriffe eingeben!");
+                return;
+            }
+            
+            // Save game settings
+            saveToLocalStorage();
+            
+            // Set up game state
+            gameState.players = [...players];
+            gameState.impostors = [];
+            gameState.currentPlayerIndex = 0;
+            gameState.useHints = elements.hintsToggle.checked;
+            gameState.familyMode = elements.familyModeToggle.checked;
+            
+            // Select impostors randomly
+            const impostorCount = parseInt(elements.impostorCount.textContent);
+            const allIndices = Array.from({length: players.length}, (_, i) => i);
+            
+            for (let i = 0; i < impostorCount; i++) {
+                const randomIndex = Math.floor(Math.random() * allIndices.length);
+                gameState.impostors.push(allIndices.splice(randomIndex, 1)[0]);
+            }
+            
+            // Select main word and hint word
+            const categoryWords = wordDatabase[gameState.selectedCategory];
+            const wordList = gameState.familyMode ? 
+                (categoryWords.family.length > 0 ? categoryWords.family : categoryWords.normal) : 
+                categoryWords.normal;
+                
+            const randomWordIndex = Math.floor(Math.random() * wordList.length);
+            gameState.mainWord = wordList[randomWordIndex];
+            gameState.hintWord = categoryWords.hints[randomWordIndex];
+            
+            // Show role screen
+            elements.mainScreen.classList.add('hidden');
+            elements.roleScreen.classList.remove('hidden');
+            elements.card.classList.remove('flipped');
+            elements.impostorRole.classList.add('hidden');
+            elements.normalRole.classList.add('hidden');
+            elements.nextPlayer.classList.add('hidden');
+            elements.firstPlayer.classList.add('hidden');
+        }
+
+        // Show role for current player
+        function showRole() {
+            elements.card.classList.add('flipped');
+            
+            const isImpostor = gameState.impostors.includes(gameState.currentPlayerIndex);
+            
+            if (isImpostor) {
+                elements.impostorRole.classList.remove('hidden');
+                elements.normalRole.classList.add('hidden');
+                
+                if (gameState.useHints) {
+                    elements.hintWordValue.textContent = gameState.hintWord;
+                    document.getElementById('hint-word').classList.remove('hidden');
+                } else {
+                    document.getElementById('hint-word').classList.add('hidden');
+                }
+            } else {
+                elements.impostorRole.classList.add('hidden');
+                elements.normalRole.classList.remove('hidden');
+                elements.mainWord.textContent = gameState.mainWord;
+            }
+            
+            // Show next player button if not all players have seen their role
+            if (gameState.currentPlayerIndex < gameState.players.length - 1) {
+                elements.nextPlayer.classList.remove('hidden');
+            } else {
+                // All players have seen their roles, show who starts
+                const randomPlayerIndex = Math.floor(Math.random() * gameState.players.length);
+                elements.firstPlayerName.textContent = gameState.players[randomPlayerIndex];
+                elements.firstPlayer.classList.remove('hidden');
+            }
+        }
+
+        // Move to next player
+        function nextPlayer() {
+            gameState.currentPlayerIndex++;
+            elements.card.classList.remove('flipped');
+            elements.impostorRole.classList.add('hidden');
+            elements.normalRole.classList.add('hidden');
+            elements.nextPlayer.classList.add('hidden');
+        }
+
+        // Reveal impostors
+        function revealImpostors() {
+            const impostorNames = gameState.impostors.map(index => gameState.players[index]);
+            
+            if (impostorNames.length === 1) {
+                elements.impostorNames.textContent = impostorNames[0];
+            } else {
+                elements.impostorNames.textContent = impostorNames.slice(0, -1).join(', ') + ' und ' + impostorNames.slice(-1);
+            }
+            
+            elements.roleScreen.classList.add('hidden');
+            elements.resolutionScreen.classList.remove('hidden');
+        }
+
+        // Start new round
+        function newRound() {
+            elements.resolutionScreen.classList.add('hidden');
+            elements.mainScreen.classList.remove('hidden');
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
