@@ -252,14 +252,19 @@
                 </div>
             </div>
             
-            <div id="first-player" class="mt-8 text-center hidden">
-                <p class="text-lg"><span class="font-semibold text-imposter-orange" id="first-player-name"></span> fängt an!</p>
-                <button id="reveal-impostors" class="mt-4 bg-imposter-turquoise text-white px-6 py-2 rounded-lg hover:bg-teal-500 transition">
+        </div>
+        
+        <!-- First Player Screen -->
+        <div id="first-player-screen" class="hidden animate-fade-in text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto">
+                <h2 class="text-2xl font-bold text-imposter-orange mb-6">Spielstart</h2>
+                <p class="text-lg mb-6"><span class="font-semibold text-imposter-orange" id="first-player-name"></span> fängt an!</p>
+                <button id="reveal-impostors" class="bg-imposter-turquoise text-white px-6 py-2 rounded-lg hover:bg-teal-500 transition">
                     Impostor aufdecken
                 </button>
             </div>
         </div>
-        
+
         <!-- Resolution Screen -->
         <div id="resolution-screen" class="hidden animate-fade-in">
             <div class="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto">
@@ -365,6 +370,7 @@
             mainWord: document.getElementById('main-word'),
             firstPlayer: document.getElementById('first-player'),
             firstPlayerName: document.getElementById('first-player-name'),
+            firstPlayerScreen: document.getElementById('first-player-screen'),
             impostorNames: document.getElementById('impostor-names'),
             card: document.querySelector('.card'),
             decreaseImpostors: document.getElementById('decrease-impostors'),
@@ -637,24 +643,31 @@
                 elements.mainWord.textContent = gameState.mainWord;
             }
             
-            // Show next player button if not all players have seen their role
+            // Show next player button for all players
             if (gameState.currentPlayerIndex < gameState.players.length - 1) {
                 elements.nextPlayer.classList.remove('hidden');
+            } else {
+                // For last player, show "Spiel starten" button
+                elements.nextPlayer.textContent = "Spiel starten";
+                elements.nextPlayer.classList.remove('hidden');
+            }
+        }
+
+        // Move to next player or start game
+        function nextPlayer() {
+            if (gameState.currentPlayerIndex < gameState.players.length - 1) {
+                gameState.currentPlayerIndex++;
+                elements.card.classList.remove('flipped');
+                elements.impostorRole.classList.add('hidden');
+                elements.normalRole.classList.add('hidden');
+                elements.nextPlayer.classList.add('hidden');
             } else {
                 // All players have seen their roles, show who starts
                 const randomPlayerIndex = Math.floor(Math.random() * gameState.players.length);
                 elements.firstPlayerName.textContent = gameState.players[randomPlayerIndex];
-                elements.firstPlayer.classList.remove('hidden');
+                elements.roleScreen.classList.add('hidden');
+                elements.firstPlayerScreen.classList.remove('hidden');
             }
-        }
-
-        // Move to next player
-        function nextPlayer() {
-            gameState.currentPlayerIndex++;
-            elements.card.classList.remove('flipped');
-            elements.impostorRole.classList.add('hidden');
-            elements.normalRole.classList.add('hidden');
-            elements.nextPlayer.classList.add('hidden');
         }
 
         // Reveal impostors
@@ -667,7 +680,7 @@
                 elements.impostorNames.textContent = impostorNames.slice(0, -1).join(', ') + ' und ' + impostorNames.slice(-1);
             }
             
-            elements.roleScreen.classList.add('hidden');
+            elements.firstPlayerScreen.classList.add('hidden');
             elements.resolutionScreen.classList.remove('hidden');
         }
 
